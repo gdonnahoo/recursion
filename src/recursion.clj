@@ -131,9 +131,10 @@
     (my-frequencies-helper {} a-seq)))
 
 (defn un-frequencies [a-map]
-  (if (empty? a-map)
-    '()
-    (concat (cons (repeat (second (first a-map)) (first (first a-map))) (un-frequencies (rest a-map))))))
+  (if (empty? a-map) []
+      (let [[elem count] (first a-map)]
+        (concat (repeat count elem)
+                (un-frequencies (rest a-map))))))
 
 (defn my-take [n coll]
   (if (or (empty? coll) (== n 0))
@@ -170,12 +171,37 @@
   (= (count a-seq) 1) (list (first a-seq))
   :else (seq-merge (merge-sort (first (halve a-seq))) (merge-sort(last (halve a-seq))))))
 
-(defn split-into-monotonics [a-seq]
-  [:-])
 
-(defn permutations [a-set]
-  [:-])
+ (defn monotonic? [a-seq]
+  (or (apply <= a-seq) (apply >= a-seq)))
+
+(defn monotonic-init [a-seq]
+  (last (take-while monotonic? (drop 2 (reverse (inits a-seq))))))
+
+ (defn split-into-monotonics [a-seq]
+  (if (empty? a-seq)
+    '()
+    (let [mono-split (monotonic-init a-seq)]
+      (cons mono-split
+            (split-into-monotonics (drop
+                                   (count mono-split) a-seq))))))
+
+(defn intersperse [val a-seq]
+  "a sequence created by adding val at each point in a-seq"
+  (map #(concat (take % a-seq) [val] (drop % a-seq))
+       (range (inc (count a-seq)))))
+
+ (defn permutations [a-set]
+  (cond (empty? a-set) '(())
+        (singleton? a-set) (list (seq a-set))
+        :else (let [val (first a-set)
+                    done (permutations (rest a-set))]
+                (mapcat #(intersperse val %) done))))
 
 (defn powerset [a-set]
-  [:-])
+  (if (empty? a-set)
+    #{#{}}
+    (let [done (powerset (rest a-set))
+          val  (first a-set)]
+      (apply conj done (map #(conj % val) done)))))
 
